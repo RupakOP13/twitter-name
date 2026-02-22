@@ -1,0 +1,11 @@
+{
+  "name": "twitter-monorepo",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix backend run dev",
+    "dev:backend": "npm --prefix backend run dev"
+  },
+  "dependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
