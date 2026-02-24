@@ -1,5 +1,7 @@
 import User from "../models/user.models.js";
 import Notification from "../models/notification.models.js";
+import bcrypt from "bcryptjs";
+import {v2 as cloudinary} from "cloudinary";
 
 
 export const getUserProfile=async(req,res)=>{
@@ -91,5 +93,69 @@ catch(error){
     res.status(500).json({message: "Internal server error"});
 }
 
+}
+
+export const updateUser=async(req,res)=>{
+    const {fullname,email,username,currentPassword,newPassword,bio,link}=req.body;
+        let {profileImg,coverImg}=req.body;
+         const userId=req.user._id;
+    try{
+        let user=await User.findById(userId);
+        if(!user){
+            return res.status(404).json({message: "User not found"});
+        }
+        if((!newPassword && currentPassword) || (newPassword && !currentPassword)){
+            return res.status(400).json({message: "Both current and new passwords are required to change password"});
+        }
+
+        if(newPassword && currentPassword){
+            const isMatch=await user.comparePassword(currentPassword);
+            if(!isMatch){
+                return res.status(400).json({message: "Current password is incorrect"});
+            }
+            if(newPassword.length<6){
+                return res.status(400).json({message: "New password must be at least 6 characters long"});
+            }
+            const salt =await bcrypt.genSalt(10);
+            user.password=await bcrypt.hash(newPassword,salt);
+        }
+        if(profileImg){
+           if(user.profileImg){
+            await cloudinary.uploader.destroy(user.profileImg.public_id);
+            }
+            const uploadedResponse= await cloudinary.uploader.upload(profileImg)
+            profileImg=uploadedResponse.secure_url;
+           }
+
+        
+        if(coverImg){
+            if(user.coverImg){
+                await cloudinary.uploader.destroy(user.coverImg.public_id);
+            }
+            const uploadedResponse= await cloudinary.uploader.upload(coverImg)
+            coverImg=uploadedResponse.secure_url;
+         }
+         user.fullName=fullname || user.fullName;
+         user.email=email || user.email;
+         user.username=username || user.username;
+         user.bio=bio || user.bio;
+         user.link=link || user.link;
+         user.profileImg=profileImg || user.profileImg;
+         user.coverImg=coverImg || user.coverImg;
+
+         user=await user.save();
+            user.password=null; // Remove password field before sending response
+            res.status(200).json(user);
+        }
+    catch(error){
+        console.error("Error updating user profile:", error);
+        res.status(500).json({message: "Internal server error"});
+
+        
+
+       
+        
+
+    }
 }
 
