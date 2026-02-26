@@ -90,3 +90,42 @@ export const commentOnPost=async(req,res)=>{
         res.status(500).json({message: "Internal server error"});
     }
 }
+
+
+export const likeUnlikePost=async(req,res)=>{
+    try{
+        const userId=req.user._id;
+        const {id:postId}=req.params;
+
+        const post =await Post.findById(postId);
+
+        if(!post){
+            return res.status(404).json({message: "Post not found"});
+        }
+const userLikedPost=post.likes.includes(userId);
+
+if(userLikedPost){
+    //  Unlike the post
+    await Post.updateOne({_id:postId},{$pull:{likes:userId}});
+    res.status(200).json({message: "Post unliked successfully"});
+}  
+else{
+    // Like the post
+    post.likes.push(userId);
+    await post.save();
+
+    const notification=new Notification({
+        from:userId,
+        to:post.user,
+        type:"like",
+    });
+    await notification.save();
+    res.status(200).json({message: "Post liked successfully"});
+}
+   }
+    catch(error){
+        console.error("Error in likeUnlikePost:", error);
+        res.status(500).json({message: "Internal server error"});
+    }
+};
+    
