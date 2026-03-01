@@ -6,6 +6,8 @@
     "dev:backend": "npm --prefix backend run dev"
   },
   "dependencies": {
-    "nodemon": "^3.1.14"
+    "@tailwindcss/vite": "^4.2.1",
+    "nodemon": "^3.1.14",
+    "tailwindcss": "^4.2.1"
   }
 }
