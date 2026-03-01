@@ -36,26 +36,24 @@ export const followUnfollowUser=async(req,res)=>{
 
         if(isFollowing){
             // Unfollow the user
-            await User.findByIdAndUpdate(id,{$pull:{followers:req.user._id}});
+            await User.findByIdAndUpdate(id,{$pull:{followers:req.user._id}}); // means
             await User.findByIdAndUpdate(req.user._id,{$pull:{following:id}});
-            res.status(200).json({message: "Unfollowed successfully"});
+            return res.status(200).json({message: "Unfollowed successfully"});
         }else{
             // Follow the user
             await User.findByIdAndUpdate(id,{$push:{followers:req.user._id}});
             await User.findByIdAndUpdate(req.user._id,{$push:{following:id}});
-            res.status(200).json({message: "Followed successfully"});
-
+            
             const newNotification=new Notification({
                 type:"follow",
                 from:req.user._id,
                 to:id,
-
-        });
-        await newNotification.save();
-    }
-}
-
-    catch(error){
+            });
+            await newNotification.save();
+            
+            res.status(200).json({message: "Followed successfully"});
+        }
+    } catch(error){
         console.error("Error in followUnfollowUser:", error);
         res.status(500).json({message: "Internal server error"});
     }
@@ -96,7 +94,7 @@ catch(error){
 }
 
 export const updateUser=async(req,res)=>{
-    const {fullname,email,username,currentPassword,newPassword,bio,link}=req.body;
+    const {fullName,email,username,currentPassword,newPassword,bio,link}=req.body;
         let {profileImg,coverImg}=req.body;
          const userId=req.user._id;
     try{
@@ -109,7 +107,7 @@ export const updateUser=async(req,res)=>{
         }
 
         if(newPassword && currentPassword){
-            const isMatch=await user.comparePassword(currentPassword);
+            const isMatch=await bcrypt.compare(currentPassword, user.password);
             if(!isMatch){
                 return res.status(400).json({message: "Current password is incorrect"});
             }
@@ -121,7 +119,8 @@ export const updateUser=async(req,res)=>{
         }
         if(profileImg){
            if(user.profileImg){
-            await cloudinary.uploader.destroy(user.profileImg.public_id);
+            const profileImgId=user.profileImg.split("/").pop().split(".")[0];
+            await cloudinary.uploader.destroy(profileImgId);
             }
             const uploadedResponse= await cloudinary.uploader.upload(profileImg)
             profileImg=uploadedResponse.secure_url;
@@ -130,12 +129,13 @@ export const updateUser=async(req,res)=>{
         
         if(coverImg){
             if(user.coverImg){
-                await cloudinary.uploader.destroy(user.coverImg.public_id);
+                const coverImgId=user.coverImg.split("/").pop().split(".")[0];
+                await cloudinary.uploader.destroy(coverImgId);
             }
             const uploadedResponse= await cloudinary.uploader.upload(coverImg)
             coverImg=uploadedResponse.secure_url;
          }
-         user.fullName=fullname || user.fullName;
+         user.fullName=fullName || user.fullName;
          user.email=email || user.email;
          user.username=username || user.username;
          user.bio=bio || user.bio;

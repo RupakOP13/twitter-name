@@ -1,13 +1,15 @@
 import express from "express";
 import cors from "cors";
 import authRoutes from "./routes/auth.routes.js";
+import postRoutes from "./routes/post.routes.js";
+import userRoutes from "./routes/user.routes.js";
 import dotenv from "dotenv";
 import connectMongoDB from "./db/connectMongoDB.js";
 import path from "path";
 import cookieParser from "cookie-parser";
 import {v2 as cloudinary} from "cloudinary";
 
-dotenv.config({ path: path.resolve("../.env") });
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -24,10 +26,12 @@ app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 app.use(cookieParser()); // Add cookie-parser middleware
 
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 
 
 app.use("/api/auth",authRoutes);
+app.use("/api/posts",postRoutes);
+app.use("/api/users",userRoutes);
 
 
 
