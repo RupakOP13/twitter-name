@@ -3,7 +3,7 @@ import { BsEmojiSmileFill } from "react-icons/bs";
 import { useRef, useState } from "react";
 import { IoCloseSharp } from "react-icons/io5";
 
-const CreatePost = () => {
+const  CreatePost = () => {
 	const [text, setText] = useState("");
 	const [img, setImg] = useState(null);
 
