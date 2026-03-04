@@ -8,6 +8,7 @@ import { MdPassword } from "react-icons/md";
 
 import {useMutation} from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 
 const LoginPage = () => {
@@ -15,6 +16,8 @@ const LoginPage = () => {
 		username: "",
 		password: "",
 	});
+
+	const queryClient=useQueryClient();
 
 	const {mutate ,isError,isPending,error}= useMutation({
 		mutationFn:async({username,password})=>{
@@ -40,7 +43,8 @@ catch(err){
 
 	},
 	onSuccess:()=>{
-		toast.success("Logged in successfully!");
+		queryClient.invalidateQueries({queryKey:["auth"]}); // Refetch auth state
+		toast.success("Logged in successfully");
 	}
 
 	});
