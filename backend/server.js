@@ -23,7 +23,7 @@ cloudinary.config({
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(express.json());
+app.use(express.json({limit: "5mb"})); // Increase the limit for JSON payloads to 5MB to accommodate larger post content and images
 app.use(express.urlencoded({extended: true}));
 app.use(cookieParser());  // Add cookie-parser middleware
 
