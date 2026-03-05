@@ -23,9 +23,9 @@ function App() {
       try{
         const res=await fetch("/api/auth/me");
         const data= await res.json();
-        if(data.error)return null; // Not logged in
+        if(data.error)return null; // null data in authUser
         if(!res.ok) return null; // Not authenticated
-        return data;
+        return data;  //return data to authUser
       }catch(err){
         console.log(err);
         return null; // Return null on error instead of throwing

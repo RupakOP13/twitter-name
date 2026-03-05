@@ -34,7 +34,7 @@ const LoginPage = () => {
 			console.log(data);
 			// Backend sets JWT cookie, so just reload to update auth state
 			window.location.reload();
-			return data;
+			return data; //
 		}
 catch(err){
 			console.log(err);
@@ -43,7 +43,7 @@ catch(err){
 
 	},
 	onSuccess:()=>{
-		queryClient.invalidateQueries({queryKey:["auth"]}); // Refetch auth state
+		queryClient.invalidateQueries({queryKey:["auth"]}); // Refetch auth/me query to update auth state
 		toast.success("Logged in successfully");
 	}
 
