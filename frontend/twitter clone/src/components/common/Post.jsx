@@ -80,6 +80,32 @@ const Post = ({ post }) => {
 			toast.error(err.message || "Failed to like post");
 		},
 	});
+
+	const {mutate:commentPost,isPending:isCommenting}=useMutation({
+		mutationFn: async(newComment) => {
+			try {
+				const res = await fetch(`/api/posts/comment/${post._id}`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ text: newComment }),
+				});
+				const data = await res.json();
+				if (!res.ok) throw new Error(data.message || "Something went wrong");
+				return data;
+			}
+			catch (err) {
+				console.log(err);
+				throw err;
+			}
+		},
+		onSuccess: () => {
+			toast.success("Comment added successfully");
+			setComment("");
+			queryClient.invalidateQueries({ queryKey: ["posts"] }); // Refetch posts to get updated comments
+		}
+	});
 	const postOwner = post.user;
 	const isLiked = post.likes.includes(authUser._id);
 
@@ -89,7 +115,7 @@ const Post = ({ post }) => {
 
 	const formattedDate = "1h";
 
-	const isCommenting = false;
+	
 
 	const handleDeletePost = () => {
 		deletePost();
@@ -97,6 +123,8 @@ const Post = ({ post }) => {
 
 	const handlePostComment = (e) => {
 		e.preventDefault();
+		if(isCommenting || !comment.trim()) return;
+		commentPost(comment);
 	};
 
 	const handleLikePost = () => {
