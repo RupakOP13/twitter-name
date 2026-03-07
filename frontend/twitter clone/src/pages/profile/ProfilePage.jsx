@@ -15,13 +15,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { useEffect } from "react";
 import { formatMemberSinceDate } from "../../utils/date/index";
+import useFollow from "../../hooks/useFollow";
 
 
 
 
 const ProfilePage = () => {
 
-	const {data:authUser,error}=useQuery({queryKey:["auth"]});
+	
 	const [coverImg, setCoverImg] = useState(null);
 	const [profileImg, setProfileImg] = useState(null);
 	const [feedType, setFeedType] = useState("posts");
@@ -30,7 +31,8 @@ const ProfilePage = () => {
 	const profileImgRef = useRef(null);
 
 	const {username}=useParams();
-	const isMyProfile = true;
+	const {follow,isPending}=useFollow();
+	const {data:authUser}=useQuery({queryKey:["auth"]});
 
 	const { data: user ,isLoading: isUserLoading,refetch,isRefetching} = useQuery({
 		queryKey: ["userProfile"],
@@ -51,6 +53,9 @@ const ProfilePage = () => {
 	// Refetch user data when the username changes
 	refetch();
 	}, [username, refetch]);
+
+	const isMyProfile=authUser._id===user?._id;
+	const amIFollowing=authUser.following.includes(user?._id);
 
 
 	
@@ -133,9 +138,13 @@ const ProfilePage = () => {
 								{!isMyProfile && (
 									<button
 										className='btn btn-outline rounded-full btn-sm'
-										onClick={() => alert("Followed successfully")}
+										onClick={() => follow(user._id)}
+										
 									>
-										Follow
+										{isPending &&"Loading..."}
+										{!isPending && amIFollowing && "Unfollow"}
+										{!isPending && !amIFollowing && 
+										"Follow"}
 									</button>
 								)}
 								{(coverImg || profileImg) && (
