@@ -1,36 +1,56 @@
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 import { IoSettingsOutline } from "react-icons/io5";
 import { FaUser } from "react-icons/fa";
 import { FaHeart } from "react-icons/fa6";
+import { useQueryClient } from "@tanstack/react-query";
 
 const NotificationPage = () => {
-	const isLoading = false;
-	const notifications = [
-		{
-			_id: "1",
-			from: {
-				_id: "1",
-				username: "johndoe",
-				profileImg: "/avatars/boy2.png",
-			},
-			type: "follow",
-		},
-		{
-			_id: "2",
-			from: {
-				_id: "2",
-				username: "janedoe",
-				profileImg: "/avatars/girl1.png",
-			},
-			type: "like",
-		},
-	];
-
-	const deleteNotifications = () => {
-		alert("All notifications deleted");
-	};
+const queryClient = useQueryClient();
+const { data: notifications, isLoading } = useQuery({
+	queryKey: ["notifications"],
+	queryFn: async () => {
+		try {
+			const res = await fetch("/api/notifications", {
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+			const data = await res.json();
+			if (!res.ok) throw new Error(data.message || "Something went wrong");
+			return data;
+		} catch (err) {
+			console.log(err);
+			throw err;
+		}
+	},
+});
+const{mutate:deleteNotifications,isPending:isDeleting}=useMutation({
+	mutationFn:async()=>{
+		try{
+			const res=await fetch("/api/notifications",{
+				method:"DELETE",
+				headers:{
+					"Content-Type":"application/json"
+				},
+			});	
+			const data= await res.json();
+			if(!res.ok) throw new Error(data.message || "Something went wrong");	
+			return data; //
+		}catch(err){
+			console.log(err);
+			throw err;
+		}
+	},
+onSuccess:()=>{
+	toast.success("Notifications deleted successfully");
+	queryClient.invalidateQueries({ queryKey: ["notifications"] });
+}
+});
 
 	return (
 		<>
