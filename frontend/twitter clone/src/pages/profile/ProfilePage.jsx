@@ -16,6 +16,9 @@ import { useParams } from "react-router-dom";
 import { useEffect } from "react";
 import { formatMemberSinceDate } from "../../utils/date/index";
 import useFollow from "../../hooks/useFollow";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+
 
 
 
@@ -32,6 +35,7 @@ const ProfilePage = () => {
 
 	const {username}=useParams();
 	const {follow,isPending}=useFollow();
+	const queryClient = useQueryClient();
 	const {data:authUser}=useQuery({queryKey:["auth"]});
 
 	const { data: user ,isLoading: isUserLoading,refetch,isRefetching} = useQuery({
@@ -53,6 +57,38 @@ const ProfilePage = () => {
 	// Refetch user data when the username changes
 	refetch();
 	}, [username, refetch]);
+
+	const {mutate:updateProfile,isPending:isUpdatingProfile}= useMutation({
+	mutationFn: async(formData) => {
+		try {
+			const res = await fetch("/api/users/update",{
+				method:"POST",
+				headers:{"Content-Type":"application/json"},
+				body:JSON.stringify(formData)
+			});
+			const data = await res.json();
+			if(!res.ok) throw new Error(data.message || "Failed to update profile");
+			return data;
+		}
+		catch(err) {
+			console.log(err);
+			throw err;
+		}
+	},
+onSuccess: () => {
+	toast.success("Profile updated successfully");
+	Promise.all([
+		queryClient.invalidateQueries(["authUser"]),
+		queryClient.invalidateQueries(["userProfile"])
+	]);
+	setCoverImg(null);
+	setProfileImg(null);
+},
+onError: (err) => {
+	toast.error(err.message || "Failed to update profile");
+}
+}
+);
 
 	const isMyProfile=authUser._id===user?._id;
 	const amIFollowing=authUser.following.includes(user?._id);
@@ -134,7 +170,7 @@ const ProfilePage = () => {
 								</div>
 							</div>
 							<div className='flex justify-end px-4 mt-5'>
-								{isMyProfile && <EditProfileModal />}
+								{isMyProfile && <EditProfileModal authUser={authUser} />}
 								{!isMyProfile && (
 									<button
 										className='btn btn-outline rounded-full btn-sm'
@@ -150,9 +186,14 @@ const ProfilePage = () => {
 								{(coverImg || profileImg) && (
 									<button
 										className='btn btn-primary rounded-full btn-sm text-white px-4 ml-2'
-										onClick={() => alert("Profile updated successfully")}
+										onClick={() => {
+											updateProfile({
+												coverImg,
+												profileImg
+											});
+										}}
 									>
-										Update
+										{isUpdatingProfile ? "Updating..." : "Update"}
 									</button>
 								)}
 							</div>
